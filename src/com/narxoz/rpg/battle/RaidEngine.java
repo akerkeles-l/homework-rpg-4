@@ -2,100 +2,89 @@ package com.narxoz.rpg.battle;
 
 import com.narxoz.rpg.bridge.Skill;
 import com.narxoz.rpg.composite.CombatNode;
-
 import java.util.Random;
 
 public class RaidEngine {
-    private Random random = new Random(1L);
+    private StringBuilder battleLog;
 
     public RaidEngine setRandomSeed(long seed) {
-        this.random = new Random(seed);
+        new Random(seed);
         return this;
     }
 
-    public void reset() {
-        this.random = new Random(1L);
-    }
-
     public RaidResult runRaid(CombatNode teamA, CombatNode teamB, Skill teamASkill, Skill teamBSkill) {
-        if (teamA == null || teamB == null || teamASkill == null || teamBSkill == null) {
-            throw new IllegalArgumentException("Teams and skills cannot be null");
-        }
-        
-        if (!teamA.isAlive() || !teamB.isAlive()) {
-            throw new IllegalStateException("Both teams must be alive to start a raid");
-        }
-        
+        battleLog = new StringBuilder();
         RaidResult result = new RaidResult();
-        int round = 0;
-        final int MAX_ROUNDS = 100;
         
-        result.addLine("=== RAID BATTLE START ===");
-        result.addLine("Team A: " + teamA.getName() + " (Health: " + teamA.getHealth() + ")");
-        result.addLine("Team B: " + teamB.getName() + " (Health: " + teamB.getHealth() + ")");
-        result.addLine("Team A Skill: " + teamASkill.getName() + " (Damage: " + teamASkill.getDamage() + ")");
-        result.addLine("Team B Skill: " + teamBSkill.getName() + " (Damage: " + teamBSkill.getDamage() + ")");
-        result.addLine("");
+        logLine("=== RAID BATTLE START ===");
+        logLine("Team A: " + teamA.getName());
+        logLine("Team B: " + teamB.getName());
+        logLine("Team A uses: " + teamASkill.getSkillName() + " (" + teamASkill.getEffectName() + ")");
+        logLine("Team B uses: " + teamBSkill.getSkillName() + " (" + teamBSkill.getEffectName() + ")");
         
-        while (teamA.isAlive() && teamB.isAlive() && round < MAX_ROUNDS) {
-            round++;
-            result.addLine("=== ROUND " + round + " ===");
+        int round = 1;
+        String winner = null;
+        
+        while (winner == null) {
+            logLine("\n--- ROUND " + round + " ---");
             
-            performCast(teamA, teamB, teamASkill, "Team A", "Team B", result);
+            logLine("Team A casts " + teamASkill.getSkillName() + ":");
+            teamASkill.cast(teamB);
             
             if (!teamB.isAlive()) {
-                result.addLine("Team B has been defeated!");
+                winner = teamA.getName();
                 break;
             }
             
-            performCast(teamB, teamA, teamBSkill, "Team B", "Team A", result);
+            logLine("Team B casts " + teamBSkill.getSkillName() + ":");
+            teamBSkill.cast(teamA);
             
-            result.addLine("Round " + round + " Status:");
-            result.addLine("  Team A Health: " + teamA.getHealth());
-            result.addLine("  Team B Health: " + teamB.getHealth());
-            result.addLine("");
+            if (!teamA.isAlive()) {
+                winner = teamB.getName();
+                break;
+            }
+            
+            logLine("\nStatus after round " + round + ":");
+            logHealth(teamA, "Team A");
+            logHealth(teamB, "Team B");
+            
+            round++;
+            
+            if (round > 100) {
+                winner = "DRAW (max rounds reached)";
+                break;
+            }
         }
         
+        logLine("\n=== RAID BATTLE END ===");
+        logLine("Winner: " + winner);
+        logLine("Total rounds: " + round);
+        
+        result.setWinner(winner);
         result.setRounds(round);
         
-        if (!teamA.isAlive() && !teamB.isAlive()) {
-            result.setWinner("Draw");
-            result.addLine("The battle ended in a draw!");
-        } else if (!teamB.isAlive()) {
-            result.setWinner("Team A");
-            result.addLine("Team A is victorious!");
-        } else if (!teamA.isAlive()) {
-            result.setWinner("Team B");
-            result.addLine("Team B is victorious!");
-        } else {
-            result.setWinner("Draw (Max rounds)");
-            result.addLine("Maximum rounds reached. The battle is a draw!");
+        for (String line : battleLog.toString().split("\n")) {
+            result.addLine(line);
         }
         
         return result;
     }
     
-    private void performCast(CombatNode attacker, CombatNode defender, Skill skill, 
-                           String attackerName, String defenderName, RaidResult result) {
-        
-        int baseDamage = skill.getDamage();
-        boolean isCritical = random.nextInt(100) < 10;
-        int finalDamage = isCritical ? baseDamage * 2 : baseDamage;
-        
-        result.addLine(attackerName + " " + attacker.getName() + 
-                       " casts " + skill.getName() + 
-                       " on " + defenderName + " " + defender.getName());
-        
-        if (isCritical) {
-            result.addLine("  CRITICAL HIT! Damage doubled!");
-        }
-        
-        result.addLine("  Deals " + finalDamage + " damage");
-        
-        defender.takeDamage(finalDamage);
-        
-        if (!defender.isAlive()) {
-            result.addLine("  " + defenderName + " " + defender.getName() + " has been defeated!");
+    private void logLine(String line) {
+        battleLog.append(line).append("\n");
+        System.out.println(line);
+    }
+    
+    private void logHealth(CombatNode team, String teamName) {
+        if (team.getChildren().isEmpty()) {
+            logLine("  " + teamName + " - " + team.getName() + ": " + team.getHealth() + " HP");
+        } else {
+            logLine("  " + teamName + " " + team.getName() + ":");
+            for (CombatNode member : team.getChildren()) {
+                if (member.isAlive()) {
+                    logLine("    " + member.getName() + ": " + member.getHealth() + " HP");
+                }
+            }
         }
     }
 }
