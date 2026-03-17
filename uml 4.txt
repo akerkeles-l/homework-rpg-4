@@ -1,0 +1,105 @@
+﻿BRIDGE PATTERN UML DIAGRAM
+
+
+                    +-------------------+
+                    |       Skill       | (abstract)
+                    +-------------------+
+                    | - skillName       |
+                    | - basePower       |
+                    | - effect: EffectImplementor |
+                    +-------------------+
+                    | + getSkillName()  |
+                    | + getEffectName() |
+                    | # resolvedDamage()|
+                    | + cast() (abstract)|
+                    +-------------------+
+                           ▲
+                           |
+         ┌─────────────────┴─────────────────┐
+         │                                   │
++----------------------+            +----------------------+
+|  SingleTargetSkill   |            |      AreaSkill       |
++----------------------+            +----------------------+
+| + cast()             |            | + cast()             |
+| (targets one node)   |            | (targets all children)|
++----------------------+            +----------------------+
+         │                                   │
+         │                                   │
+         └───────────────┬───────────────────┘
+                         │ uses
+                         ▼
+            +-----------------------+
+            |   EffectImplementor   | (interface)
+            +-----------------------+
+            | + computeDamage()     |
+            | + getEffectName()     |
+            +-----------------------+
+                         ▲
+                         │
+         ┌───────────────┼───────────────┐
+         │               │               │
++----------------+ +----------------+ +----------------+
+| PhysicalEffect | |   FireEffect   | |   IceEffect    |
++----------------+ +----------------+ +----------------+
+| + computeDamage| | + computeDamage| | + computeDamage|
+| + getEffectName| | + getEffectName| | + getEffectName|
++----------------+ +----------------+ +----------------+
+         │
++----------------+
+| ShadowEffect   |
++----------------+
+| + computeDamage|
+| + getEffectName|
++----------------+
+
+
+
+
+
+
+
+
+
+
+COMPOSITE PATTERN UML DIAGRAM
+==============================
+
+
+                    +-------------------+
+                    |    CombatNode     | (interface)
+                    +-------------------+
+                    | + getName()       |
+                    | + getHealth()     |
+                    | + getAttackPower()|
+                    | + takeDamage()    |
+                    | + isAlive()       |
+                    | + getChildren()   |
+                    | + printTree()     |
+                    +-------------------+
+                           ▲
+                           |
+         ┌─────────────────┴─────────────────┐
+         │                                   │
++----------------------+            +----------------------+
+|      UnitLeaf        |            |    PartyComposite    |
+|   (abstract class)   |            +----------------------+
++----------------------+            | - children: List     |
+| - name: String       |            +----------------------+
+| - health: int        |            | + add()              |
+| - attackPower: int   |            | + remove()           |
++----------------------+            | + getHealth()        |
+| + getAttackPower()   |            | + getAttackPower()   |
+| + takeDamage()       |            | + takeDamage()       |
+| + isAlive()          |            | + isAlive()          |
+| + printTree()        |            | + printTree()        |
++----------------------+            +----------------------+
+         ▲                                   ▲
+         │                                   │
+         ├──────────────┐                    │
+         │              │                    │
++----------------+ +---------------+  +----------------+
+|   HeroUnit     | |  EnemyUnit    |  |   RaidGroup    |
++----------------+ +---------------+  +----------------+
+| + HeroUnit()   | | + EnemyUnit() |  | + RaidGroup()  |
++----------------+ +---------------+  +----------------+
+ мынау UML_COMPOSITE.txt
