@@ -1,28 +1,33 @@
 package com.narxoz.rpg.bridge;
 
-public class Skill {
+import com.narxoz.rpg.composite.CombatNode;
 
-    private String name;
-    private int damage;
+public abstract class Skill {
+    private final String skillName;
+    private final int basePower;
+    private final EffectImplementor effect;
 
-    public Skill(String name, int damage) {
-        this.name = name;
-        this.damage = damage;
+    protected Skill(String skillName, int basePower, EffectImplementor effect) {
+        this.skillName = skillName;
+        this.basePower = basePower;
+        this.effect = effect;
     }
 
-    public String getName() {
-        return name;
+    public String getSkillName() {
+        return skillName;
     }
 
-    public int getDamage() {
-        return damage;
+    public int getBasePower() {
+        return basePower;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public String getEffectName() {
+        return effect.getEffectName();
     }
 
-    public void setDamage(int damage) {
-        this.damage = damage;
+    public int resolvedDamage() {
+        return effect.computeDamage(basePower);
     }
+
+    public abstract void cast(CombatNode target);
 }
